@@ -1,0 +1,6 @@
+{"id":"q001","question":"AORUS MASTER 16 BXH 的 GPU 規格是什麼？","model_filter":"BXH","expected_top_id":"bxh-顯示晶片","expected_chunk_ids":["bxh-顯示晶片"],"expected":"NVIDIA GeForce RTX 5090 Laptop GPU, 24GB GDDR7, 175W Maximum Graphics Power, AI Boost 1797 MHz"}
+{"id":"q002","question":"What ports are on the right side?","expected_chunk_ids":["bxh-連接埠","byh-連接埠","bzh-連接埠","compare-連接埠"],"expected":"USB3.2 Gen2 Type-A, Thunderbolt 4 Type-C, MicroSD UHS-II, audio combo jack"}
+{"id":"q003","question":"這台筆電的電池容量是多少？","expected_chunk_ids":["bxh-電池","byh-電池","bzh-電池","compare-電池"],"expected":"Li-ion 99Wh"}
+{"id":"q004","question":"Compare the GPU differences between BXH, BYH, and BZH.","expected_top_id":"compare-顯示晶片","expected_chunk_ids":["compare-顯示晶片"],"expected":"BXH RTX 5090 24GB 175W; BYH RTX 5080 16GB 175W; BZH RTX 5070 Ti 12GB 140W"}
+{"id":"q005","question":"螢幕解析度、刷新率與面板類型是什麼？","expected_chunk_ids":["bxh-顯示器","byh-顯示器","bzh-顯示器","compare-顯示器"],"expected":"16 inch 16:10 OLED WQXGA 2560x1600 240Hz"}
+{"id":"q006","question":"Does the official spec mention the laptop price?","expected_refusal":true,"expected":"The specs do not provide price information."}

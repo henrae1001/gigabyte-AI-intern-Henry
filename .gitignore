@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+models/*
+!models/README.md
+tools/*
+!tools/README.md
+indexes/
+data/raw/*.html
+data/processed/*.json
+data/processed/*.md
+eval/results*.json

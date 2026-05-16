@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Sync environment
+        run: uv sync --locked
+      - name: Compile
+        run: uv run python -m compileall src
+      - name: Unit tests
+        run: uv run python -m unittest discover -s tests
+      - name: Build seed index
+        run: uv run gigabyte-rag ingest --seed
+      - name: Retrieval benchmark
+        run: uv run gigabyte-rag bench --questions eval/questions.jsonl --output eval/results.json --no-llm

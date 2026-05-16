@@ -1,0 +1,29 @@
+[project]
+name = "gigabyte-ai-intern-henry"
+version = "0.1.0"
+description = "Pure Python RAG assistant for GIGABYTE AORUS MASTER 16 AM6H specs."
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "beautifulsoup4>=4.12.3",
+    "httpx>=0.27.0",
+    "llama-cpp-python>=0.2.90",
+]
+
+[project.scripts]
+gigabyte-rag = "gigabyte_rag.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gigabyte_rag"]
+
+[tool.uv.sources]
+llama-cpp-python = { index = "llama-cpp-python-cpu" }
+
+[[tool.uv.index]]
+name = "llama-cpp-python-cpu"
+url = "https://abetlen.github.io/llama-cpp-python/whl/cpu"
+explicit = true
