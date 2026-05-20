@@ -161,15 +161,17 @@ Metrics:
 
 ## Step 8. Run benchmark
 
-Retrieval-only benchmark:
+Complete retrieval-only evaluation:
 
 ```bash
+uv run gigabyte-rag ingest --seed
 uv run gigabyte-rag bench --questions eval/questions.jsonl --output eval/results.json --no-llm
 ```
 
-LLM benchmark:
+Complete LLM evaluation:
 
 ```bash
+uv run gigabyte-rag ingest --seed
 uv run gigabyte-rag bench --questions eval/questions.jsonl --output eval/results.json --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --max-tokens 96 --temperature 0.1
 ```
 
