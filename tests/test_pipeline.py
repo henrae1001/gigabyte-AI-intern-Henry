@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from argparse import Namespace
 from pathlib import Path
 
 from gigabyte_rag.chunking import build_chunks
+from gigabyte_rag.cli import _default_benchmark_output
 from gigabyte_rag.llm import build_llama_cli_command
 from gigabyte_rag.parser import parse_specs, seed_specs, validate_specs
-from gigabyte_rag.pipeline import retrieve
+from gigabyte_rag.pipeline import _resolve_cached_html_path, retrieve
 from gigabyte_rag.vector_index import HashingVectorIndex
 
 
@@ -93,6 +95,43 @@ class LlamaCliTests(unittest.TestCase):
         self.assertIn("--no-display-prompt", command)
         self.assertEqual(command[command.index("-p") + 1], "Question with spaces")
         self.assertEqual(command[command.index("-ngl") + 1], "0")
+
+
+class BenchmarkOutputTests(unittest.TestCase):
+    def test_default_output_uses_retrieval_name_for_no_llm(self) -> None:
+        args = Namespace(no_llm=True, model_path=None, llama_server_url=None, llama_cli_path=None)
+
+        self.assertEqual(_default_benchmark_output(args), "eval/results_retrieval.json")
+
+    def test_default_output_uses_model_size_name(self) -> None:
+        args_15b = Namespace(
+            no_llm=False,
+            model_path="models/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+            llama_server_url=None,
+            llama_cli_path=None,
+        )
+        args_3b = Namespace(
+            no_llm=False,
+            model_path="models/qwen2.5-3b-instruct-q4_k_m.gguf",
+            llama_server_url=None,
+            llama_cli_path=None,
+        )
+
+        self.assertEqual(_default_benchmark_output(args_15b), "eval/results_1.5b.json")
+        self.assertEqual(_default_benchmark_output(args_3b), "eval/results_3b.json")
+
+
+class CachedHtmlTests(unittest.TestCase):
+    def test_resolves_single_html_file_with_original_download_name(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            raw_dir = Path(temp_dir) / "data" / "raw"
+            raw_dir.mkdir(parents=True)
+            html_path = raw_dir / "AORUS MASTER 16 AM6H official page.html"
+            html_path.write_text("<html></html>", encoding="utf-8")
+
+            resolved = _resolve_cached_html_path(raw_dir / "aorus_master_16_am6h.html")
+
+            self.assertEqual(resolved, html_path)
 
 
 def _build_temp_index() -> Path:

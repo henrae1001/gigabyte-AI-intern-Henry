@@ -5,10 +5,8 @@ import json
 import sys
 import time
 from pathlib import Path
-from httpx import HTTPStatusError
 
 from gigabyte_rag.config import DEFAULT_MODEL_PATH, INDEX_PATH
-from gigabyte_rag.download_model import MODEL_SPECS, destination_for, download_model, resolve_model_spec
 from gigabyte_rag.llm import (
     build_prompt,
     estimate_prompt_tokens,
@@ -30,7 +28,7 @@ def main() -> None:
     ingest_parser.add_argument("--seed", action="store_true", help="Build from embedded official spec summary without downloading")
 
     model_parser = subparsers.add_parser("download-model", help="Download a recommended GGUF model into models/")
-    model_parser.add_argument("--model", choices=sorted(MODEL_SPECS), default="qwen2.5-3b-q4_k_m")
+    model_parser.add_argument("--model", choices=["qwen2.5-1.5b-q4_k_m", "qwen2.5-3b-q4_k_m"], default="qwen2.5-3b-q4_k_m")
     model_parser.add_argument("--output", help=f"Destination path. Default: {DEFAULT_MODEL_PATH}")
     model_parser.add_argument("--force", action="store_true", help="Redownload even when the destination already exists")
 
@@ -51,7 +49,7 @@ def main() -> None:
 
     bench_parser = subparsers.add_parser("bench", help="Run retrieval/generation benchmark from JSONL")
     bench_parser.add_argument("--questions", default="eval/questions.jsonl")
-    bench_parser.add_argument("--output", default="eval/results.json")
+    bench_parser.add_argument("--output", help="Output JSON path. Default depends on --no-llm or --model-path")
     bench_parser.add_argument("--model-path")
     bench_parser.add_argument("--llama-cli-path")
     bench_parser.add_argument("--llama-server-url")
@@ -67,11 +65,15 @@ def main() -> None:
     if args.command == "ingest":
         try:
             ingest(use_cached_html=args.cached_html, use_seed=args.seed)
-        except HTTPStatusError as exc:
+        except Exception as exc:
+            if exc.__class__.__name__ != "HTTPStatusError":
+                raise
+            response = getattr(exc, "response", None)
+            status_code = getattr(response, "status_code", "unknown")
             print(
-                f"Failed to download official page: HTTP {exc.response.status_code}. "
+                f"Failed to download official page: HTTP {status_code}. "
                 "Use `uv run gigabyte-rag ingest --seed` for the embedded official spec summary, "
-                "or save the page HTML to data/raw/aorus_master_16_am6h.html and run with --cached-html.",
+                "or save one HTML file under data/raw/ and run with --cached-html.",
                 file=sys.stderr,
             )
             raise SystemExit(1) from exc
@@ -116,6 +118,8 @@ def _ask(args: argparse.Namespace) -> None:
 
 
 def _download_model(args: argparse.Namespace) -> None:
+    from gigabyte_rag.download_model import destination_for, download_model, resolve_model_spec
+
     spec = resolve_model_spec(args.model)
     destination = Path(args.output) if args.output else destination_for(spec)
     print(f"Downloading {spec.repo_id}/{spec.filename}")
@@ -142,6 +146,7 @@ def _download_model(args: argparse.Namespace) -> None:
 
 def _bench(args: argparse.Namespace) -> None:
     _ensure_index()
+    output_path = args.output or _default_benchmark_output(args)
     rows = []
     with open(args.questions, "r", encoding="utf-8") as handle:
         for line in handle:
@@ -200,9 +205,9 @@ def _bench(args: argparse.Namespace) -> None:
                 }
             )
 
-    with open(args.output, "w", encoding="utf-8") as handle:
+    with open(output_path, "w", encoding="utf-8") as handle:
         json.dump(rows, handle, ensure_ascii=False, indent=2)
-    print(f"Wrote benchmark results to {args.output}")
+    print(f"Wrote benchmark results to {output_path}")
 
 
 def _generation_stream(args: argparse.Namespace, prompt: str, *, max_tokens: int):
@@ -237,6 +242,22 @@ def _has_generation_backend(args: argparse.Namespace) -> bool:
     if args.llama_server_url:
         return True
     return bool(args.model_path)
+
+
+def _default_benchmark_output(args: argparse.Namespace) -> str:
+    if args.no_llm or not _has_generation_backend(args):
+        return "eval/results_retrieval.json"
+
+    model_path = (args.model_path or "").lower()
+    if "1.5b" in model_path or "1_5b" in model_path:
+        return "eval/results_1.5b.json"
+    if "3b" in model_path:
+        return "eval/results_3b.json"
+    if args.llama_server_url:
+        return "eval/results_llama_server.json"
+    if args.llama_cli_path:
+        return "eval/results_llama_cli.json"
+    return "eval/results_llm.json"
 
 
 def _top_id_hit(results, expected_top_id: str | None) -> bool | None:

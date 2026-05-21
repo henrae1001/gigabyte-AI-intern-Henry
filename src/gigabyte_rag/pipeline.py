@@ -30,8 +30,9 @@ def ingest(
     if use_seed:
         specs = seed_specs(source_url)
     else:
-        if use_cached_html and raw_html_path.exists():
-            html = load_html(raw_html_path)
+        if use_cached_html:
+            cached_html_path = _resolve_cached_html_path(raw_html_path)
+            html = load_html(cached_html_path)
         else:
             html = download_html(source_url)
             save_html(html, raw_html_path)
@@ -59,3 +60,21 @@ def retrieve(
     results = [result for result in index.search(question, top_k=top_k, model_filter=model_filter) if result.score >= min_score]
     elapsed = time.perf_counter() - start
     return results, RetrievalMetrics(elapsed, len(results))
+
+
+def _resolve_cached_html_path(raw_html_path: Path) -> Path:
+    if raw_html_path.exists():
+        return raw_html_path
+
+    html_files = sorted(raw_html_path.parent.glob("*.html"))
+    if len(html_files) == 1:
+        return html_files[0]
+    if not html_files:
+        raise FileNotFoundError(
+            f"No cached HTML found. Expected {raw_html_path} or one .html file under {raw_html_path.parent}."
+        )
+    choices = ", ".join(str(path) for path in html_files)
+    raise FileExistsError(
+        f"Multiple cached HTML files found under {raw_html_path.parent}. "
+        f"Please keep one file or use the default path {raw_html_path}. Found: {choices}"
+    )
