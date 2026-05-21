@@ -25,7 +25,7 @@ Windows PowerShell:
 
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-$env:Path = "C:\Users\User\.local\bin;$env:Path"
+$env:Path = "$HOME\.local\bin;$env:Path"
 ```
 
 Linux / macOS:
@@ -33,6 +33,18 @@ Linux / macOS:
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+WSL:
+
+```bash
+# Run this inside the cloned repository.
+pwd
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source "$HOME/.local/bin/env"
+uv --version
+```
+
+If you already installed `uv` in Windows, WSL still needs its own Linux-side `uv` installation.
 
 Check:
 
@@ -143,6 +155,20 @@ GGUF files are ignored by Git.
 ```bash
 uv run gigabyte-rag ask "AORUS MASTER 16 BXH 的 GPU 規格是什麼？" --model-filter BXH --model-path models/qwen2.5-3b-instruct-q4_k_m.gguf --n-gpu-layers 0 --max-tokens 96 --temperature 0.1
 ```
+
+WSL CPU-only baseline:
+
+```bash
+uv run gigabyte-rag ask "AORUS MASTER 16 BXH 的 GPU 規格是什麼？" --model-filter BXH --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --top-k 1 --n-gpu-layers 0 --max-tokens 96 --temperature 0.1
+```
+
+WSL with NVIDIA GPU requires WSL GPU driver support. Check first:
+
+```bash
+nvidia-smi
+```
+
+If `nvidia-smi` works, try `--n-gpu-layers -1`. If VRAM is not enough, lower `--n-gpu-layers`.
 
 1.5B fallback model with smaller retrieval context:
 
