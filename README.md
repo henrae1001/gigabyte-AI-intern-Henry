@@ -88,6 +88,8 @@ If you saved the official HTML manually, place it here:
 data/raw/aorus_master_16_am6h.html
 ```
 
+`--cached-html` also accepts one `.html` file under `data/raw/`, so the original browser download name is fine if it is the only HTML file in that folder.
+
 Then run:
 
 ```bash
@@ -187,19 +189,65 @@ Metrics:
 
 ## Step 8. Run benchmark
 
-Complete retrieval-only evaluation:
+Benchmark has two dimensions:
+
+- Data source: `--seed` or `--cached-html`
+- Generation mode: `--no-llm` or `--model-path`
+
+Retrieval-only evaluation with seed data:
 
 ```bash
 uv run gigabyte-rag ingest --seed
-uv run gigabyte-rag bench --questions eval/questions.jsonl --output eval/results.json --no-llm
+uv run gigabyte-rag bench --questions eval/questions.jsonl --no-llm
 ```
 
-Complete LLM evaluation:
+Default output:
+
+```text
+eval/results_retrieval.json
+```
+
+Retrieval-only evaluation with official cached HTML:
+
+```bash
+uv run gigabyte-rag ingest --cached-html
+uv run gigabyte-rag bench --questions eval/questions.jsonl --output eval/results_retrieval_html.json --no-llm
+```
+
+LLM evaluation with seed data:
 
 ```bash
 uv run gigabyte-rag ingest --seed
-uv run gigabyte-rag bench --questions eval/questions.jsonl --output eval/results.json --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --max-tokens 96 --temperature 0.1
+uv run gigabyte-rag bench --questions eval/questions.jsonl --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --max-tokens 96 --temperature 0.1
 ```
+
+Default output for the command above:
+
+```text
+eval/results_1.5b.json
+```
+
+LLM evaluation with official cached HTML:
+
+```bash
+uv run gigabyte-rag ingest --cached-html
+uv run gigabyte-rag bench --questions eval/questions.jsonl --output eval/results_1.5b_html.json --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --max-tokens 96 --temperature 0.1
+```
+
+3B model evaluation:
+
+```bash
+uv run gigabyte-rag ingest --seed
+uv run gigabyte-rag bench --questions eval/questions.jsonl --model-path models/qwen2.5-3b-instruct-q4_k_m.gguf --max-tokens 96 --temperature 0.1
+```
+
+Default output:
+
+```text
+eval/results_3b.json
+```
+
+If `--output` is provided, the CLI always uses the explicit path.
 
 See report:
 
@@ -228,19 +276,6 @@ Fallback model:
 - Recommended with `--top-k 1`
 
 Reason: the domain is narrow. Retrieval provides the official spec context, and the SLM only formats the answer. 3B Q4_K_M targets 4GB VRAM. 1.5B Q4_K_M is for CPU-only or safer low-memory runs.
-
-## Benchmark Summary
-
-| Metric | Result |
-| --- | ---: |
-| Questions | 6 |
-| Average retrieval latency | 0.0119 s |
-| Expected chunk Hit@K | 5 / 5 answerable questions |
-| Refusal precision | 1 / 1 out-of-scope question |
-| 3B CPU fallback | TTFT 47.48 s / TPS 1.78 |
-| 1.5B CPU fallback | TTFT 1.44 s / TPS 26.46 |
-
-Full report: `eval/results.md`.
 
 ## Troubleshooting
 
