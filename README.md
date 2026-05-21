@@ -158,12 +158,6 @@ GGUF files are ignored by Git.
 uv run gigabyte-rag ask "AORUS MASTER 16 BXH 的 GPU 規格是什麼？" --model-filter BXH --model-path models/qwen2.5-3b-instruct-q4_k_m.gguf --n-gpu-layers 0 --max-tokens 96 --temperature 0.1
 ```
 
-WSL CPU-only baseline:
-
-```bash
-uv run gigabyte-rag ask "AORUS MASTER 16 BXH 的 GPU 規格是什麼？" --model-filter BXH --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --top-k 1 --n-gpu-layers 0 --max-tokens 96 --temperature 0.1
-```
-
 WSL with NVIDIA GPU requires WSL GPU driver support. Check first:
 
 ```bash
@@ -176,6 +170,35 @@ If `nvidia-smi` works, try `--n-gpu-layers -1`. If VRAM is not enough, lower `--
 
 ```bash
 uv run gigabyte-rag ask "AORUS MASTER 16 BXH 的 GPU 規格是什麼？" --model-filter BXH --top-k 1 --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --n-gpu-layers 0 --max-tokens 96 --temperature 0.1
+```
+
+LLM refusal example:
+
+```bash
+uv run gigabyte-rag ask \
+  "Does the official spec mention the laptop warranty period?" \
+  --debug \
+  --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
+  --max-tokens 96 \
+  --temperature 0.1
+```
+
+Expected behavior: the retrieved context is empty or insufficient, so the model should answer that the warranty period cannot be confirmed from the official specs.
+
+Example WSL CPU output:
+
+```text
+retrieval_seconds=0.0314
+prompt_estimated_tokens=109
+I cannot confirm it from the official specs. The context provided does not contain any information about the warranty period for the GIGABYTE laptop.
+{
+  "retrieval_seconds": 0.031419492999702925,
+  "ttft_seconds": 13.83816276699963,
+  "total_generation_seconds": 18.089723839999806,
+  "output_tokens": 96,
+  "tokens_per_second": 5.306880350916459,
+  "prompt_estimated_tokens": 109
+}
 ```
 
 Metrics:
