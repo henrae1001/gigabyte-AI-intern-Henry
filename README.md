@@ -104,6 +104,14 @@ Traditional Chinese query:
 uv run gigabyte-rag ask "AORUS MASTER 16 BXH 的 GPU 規格是什麼？" --model-filter BXH --debug --no-llm
 ```
 
+Shorter prompt with only the top retrieved chunk:
+
+```bash
+uv run gigabyte-rag ask "AORUS MASTER 16 BXH 的 GPU 規格是什麼？" --model-filter BXH --debug --no-llm --top-k 1
+```
+
+This usually keeps only the first `bxh-顯示晶片` chunk, making the prompt shorter.
+
 English query:
 
 ```bash
@@ -172,25 +180,37 @@ If `nvidia-smi` works, try `--n-gpu-layers -1`. If VRAM is not enough, lower `--
 uv run gigabyte-rag ask "AORUS MASTER 16 BXH 的 GPU 規格是什麼？" --model-filter BXH --top-k 1 --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --n-gpu-layers 0 --max-tokens 96 --temperature 0.1
 ```
 
+LLM English ports query:
+
+```bash
+uv run gigabyte-rag ask "What ports are on the right side?" --debug --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --max-tokens 96 --temperature 0.1
+```
+
+LLM model comparison:
+
+```bash
+uv run gigabyte-rag ask "Compare the GPU differences between BXH, BYH, and BZH." --debug --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf --max-tokens 128 --temperature 0.1
+```
+
 LLM refusal example:
 
 ```bash
 uv run gigabyte-rag ask \
-  "Does the official spec mention the laptop warranty period?" \
+  "Does the official spec mention the laptop price?" \
   --debug \
   --model-path models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
   --max-tokens 96 \
   --temperature 0.1
 ```
 
-Expected behavior: the retrieved context is empty or insufficient, so the model should answer that the warranty period cannot be confirmed from the official specs.
+Expected behavior: the retrieved context is empty or insufficient, so the model should answer that the price cannot be confirmed from the official specs.
 
 Example WSL CPU output:
 
 ```text
 retrieval_seconds=0.0314
 prompt_estimated_tokens=109
-I cannot confirm it from the official specs. The context provided does not contain any information about the warranty period for the GIGABYTE laptop.
+I cannot confirm it from the official specs. The context provided does not contain any information about the laptop price.
 {
   "retrieval_seconds": 0.031419492999702925,
   "ttft_seconds": 13.83816276699963,
